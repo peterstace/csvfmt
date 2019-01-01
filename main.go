@@ -2,54 +2,43 @@ package main
 
 import (
 	"encoding/csv"
-	"flag"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 )
 
 func main() {
-	inPlace := flag.Bool("w", false, "write result to source instead of stdout")
-	flag.Parse()
-
-	if err := FormatCSV(*inPlace, flag.Args()); err != nil {
+	if err := FormatCSV(); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v", err)
 		os.Exit(1)
 	}
 }
 
-func FormatCSV(inPlace bool, filenames []string) error {
-	if len(filenames) == 0 {
-		lines, err := ExtractLines(os.Stdin)
-		if err != nil {
-			return fmt.Errorf("extracting csv lines: %v", err)
-		}
-		if err := WriteLines(os.Stdout, Align(lines)); err != nil {
-			return fmt.Errorf("writing csv lines: %v", err)
-		}
-	} else {
-		return fmt.Errorf("READING FROM FILES NOT SUPPORTED")
+func FormatCSV() error {
+	lines, err := csv.NewReader(os.Stdin).ReadAll()
+	if err != nil {
+		return fmt.Errorf("extracting csv lines: %v", err)
+	}
+	if err := WriteLines(Align(lines)); err != nil {
+		return fmt.Errorf("writing csv lines: %v", err)
 	}
 	return nil
 }
 
-func ExtractLines(r io.Reader) ([][]string, error) {
-	return csv.NewReader(r).ReadAll()
-}
-
-func WriteLines(w io.Writer, lines [][]string) error {
+func WriteLines(lines [][]string) error {
+	// Can't use the standard csv writer, because it will escape any fields
+	// that have leading spaces.
 	for _, line := range lines {
 		for j, field := range line {
 			var delim = ","
 			if j == len(line)-1 {
 				delim = ""
 			}
-			if _, err := fmt.Fprintf(w, " %s%s", field, delim); err != nil {
+			if _, err := fmt.Printf(" %s%s", field, delim); err != nil {
 				return err
 			}
 		}
-		if _, err := w.Write([]byte{'\n'}); err != nil {
+		if _, err := fmt.Println(); err != nil {
 			return err
 		}
 	}
@@ -72,7 +61,6 @@ func Align(lines [][]string) [][]string {
 	for i, line := range lines {
 		aligned[i] = make([]string, len(line))
 		for j, field := range line {
-			// TODO: could make this more efficient
 			aligned[i][j] = fmt.Sprintf("%*s", max[j], strings.TrimSpace(field))
 		}
 	}
