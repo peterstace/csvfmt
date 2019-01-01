@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -59,6 +60,7 @@ func Align(lines [][]string) [][]string {
 	var max []int
 	for _, line := range lines {
 		for j, field := range line {
+			field = strings.TrimSpace(field)
 			if j == len(max) {
 				max = append(max, len(field))
 			} else if max[j] < len(field) {
@@ -71,7 +73,7 @@ func Align(lines [][]string) [][]string {
 		aligned[i] = make([]string, len(line))
 		for j, field := range line {
 			// TODO: could make this more efficient
-			aligned[i][j] = fmt.Sprintf("%*s", max[j], field)
+			aligned[i][j] = fmt.Sprintf("%*s", max[j], strings.TrimSpace(field))
 		}
 	}
 	return aligned
