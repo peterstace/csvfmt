@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -33,6 +34,9 @@ func WriteLines(lines [][]string) error {
 			var delim = ","
 			if j == len(line)-1 {
 				delim = ""
+			}
+			if strings.Contains(field, ",") {
+				field = strconv.Quote(field)
 			}
 			if _, err := fmt.Printf(" %s%s", field, delim); err != nil {
 				return err
